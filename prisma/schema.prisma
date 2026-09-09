@@ -1,0 +1,183 @@
+// CaldenIA — modelo HSE multi-tenant
+// tenant → cliente → planta → template / registro → documento
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  TECH
+  VIEWER
+}
+
+enum TenantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum RecordStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  ARCHIVED
+}
+
+/// Operador de la plataforma CaldenIA (vos). No pertenece a ningún tenant.
+model PlatformUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String @default("")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// Estudio / consultora HSE (cuenta SaaS)
+model Tenant {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  status      TenantStatus @default(PENDING)
+  logoUrl     String?
+  license     String? // matrícula profesional
+  notes       String? // notas internas del super user
+  activatedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  users     User[]
+  clients   Client[]
+  templates FormTemplate[]
+
+  @@index([status])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String
+  name         String
+  passwordHash String   @default("")
+  role         UserRole @default(TECH)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+}
+
+/// Empresa cliente del profesional HSE
+model Client {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  cuit      String?
+  art       String?
+  contact   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plants Plant[]
+
+  @@index([tenantId])
+}
+
+/// Planta / establecimiento
+model Plant {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  address   String?
+  srtNumber String?
+  headcount Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client  Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  assets  Asset[]
+  records FormRecord[]
+
+  @@index([clientId])
+}
+
+/// Activo con QR (matafuego, tablero, etc.)
+model Asset {
+  id        String   @id @default(cuid())
+  plantId   String
+  name      String
+  kind      String?
+  qrCode    String   @unique @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plant Plant @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@index([plantId])
+}
+
+/// Plantilla de formulario (p. ej. charla de 5 minutos)
+model FormTemplate {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String
+  slug        String
+  description String?
+  /// Campos del formulario: [{ id, type, label, required, options? }]
+  schema      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  records FormRecord[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+/// Registro completado en campo (vía QR / móvil)
+model FormRecord {
+  id         String       @id @default(cuid())
+  templateId String
+  plantId    String
+  status     RecordStatus @default(DRAFT)
+  /// Respuestas del formulario
+  answers    Json
+  signedBy   String?
+  submittedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  template  FormTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  plant     Plant        @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  documents Document[]
+
+  @@index([templateId])
+  @@index([plantId])
+  @@index([status])
+}
+
+/// PDF u otro documento emitido
+model Document {
+  id        String   @id @default(cuid())
+  recordId  String
+  title     String
+  fileUrl   String?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  record FormRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@index([recordId])
+}
