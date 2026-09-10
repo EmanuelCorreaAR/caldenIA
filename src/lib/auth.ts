@@ -21,6 +21,11 @@ export type TenantSession = {
   email: string;
   name: string;
   role: UserRole;
+  /** Solo role CLIENT */
+  clientId?: string | null;
+  clientName?: string | null;
+  mustChangePassword?: boolean;
+  tenantLogoUrl?: string | null;
 };
 
 export type Session = PlatformSession | TenantSession;
@@ -98,7 +103,6 @@ export async function setSession(session: Session): Promise<void> {
 export async function clearSession(): Promise<void> {
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);
-  // limpia cookie vieja del admin por secreto
   jar.delete("caldenia_platform");
 }
 
@@ -106,22 +110,56 @@ export async function requirePlatformSession(): Promise<PlatformSession> {
   const session = await getSession();
   if (!session || session.kind !== "platform") {
     const { redirect } = await import("next/navigation");
-    redirect("/login?next=/admin");
+    redirect("/?next=/admin");
   }
   return session as PlatformSession;
 }
 
+/** Profesional de la marca (no portal cliente). */
 export async function requireTenantSession(): Promise<TenantSession> {
   const session = await getSession();
   if (!session || session.kind !== "tenant") {
     const { redirect } = await import("next/navigation");
-    redirect("/login?next=/app");
+    redirect("/?next=/app");
   }
-  return session as TenantSession;
+  const tenant = session as TenantSession;
+  if (tenant.mustChangePassword) {
+    const { redirect } = await import("next/navigation");
+    redirect("/cambiar-clave");
+  }
+  if (tenant.role === "CLIENT") {
+    const { redirect } = await import("next/navigation");
+    redirect("/portal");
+  }
+  return tenant;
+}
+
+/** Usuario portal de una empresa cliente. */
+export async function requireClientSession(): Promise<
+  TenantSession & { clientId: string }
+> {
+  const session = await getSession();
+  if (!session || session.kind !== "tenant") {
+    const { redirect } = await import("next/navigation");
+    redirect("/?next=/portal");
+  }
+  const tenant = session as TenantSession;
+  if (tenant.mustChangePassword) {
+    const { redirect } = await import("next/navigation");
+    redirect("/cambiar-clave");
+  }
+  if (tenant.role !== "CLIENT" || !tenant.clientId) {
+    const { redirect } = await import("next/navigation");
+    redirect(homeForSession(tenant));
+  }
+  return tenant as TenantSession & { clientId: string };
 }
 
 export function homeForSession(session: Session): string {
-  return session.kind === "platform" ? "/admin" : "/app";
+  if (session.kind === "platform") return "/admin";
+  if (session.mustChangePassword) return "/cambiar-clave";
+  if (session.role === "CLIENT") return "/portal";
+  return "/app";
 }
 
 export function slugify(input: string): string {

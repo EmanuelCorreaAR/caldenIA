@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** El login es único en /login */
+/** El login es único en `/` */
 export default function AdminLoginRedirect() {
-  redirect("/login?next=/admin");
+  redirect("/?next=/admin");
 }

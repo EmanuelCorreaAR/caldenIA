@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TenantStatus } from "@prisma/client";
+import { DeleteTenantButton } from "@/components/delete-tenant-button";
 import { setTenantStatus } from "../actions";
 import { prisma } from "@/lib/prisma";
 
@@ -54,7 +55,7 @@ export default async function AdminHomePage() {
           <p className="text-sm text-muted">Todavía no hay estudios cargados.</p>
           <Link
             href="/admin/nuevo"
-            className="mt-3 inline-block text-sm font-semibold text-ink underline underline-offset-2"
+            className="mt-3 inline-block text-sm font-semibold text-accent underline underline-offset-2"
           >
             Crear el primero
           </Link>
@@ -119,6 +120,10 @@ export default async function AdminHomePage() {
                         label="A pendiente"
                       />
                     ) : null}
+                    <DeleteTenantButton
+                      tenantId={tenant.id}
+                      tenantName={tenant.name}
+                    />
                   </div>
                 </div>
               </li>

@@ -24,7 +24,7 @@ export default async function ClientesPage() {
             Clientes
           </h1>
           <p className="mt-1 text-sm text-muted">
-            Empresas a cargo de {session.tenantName}.
+            Clientes a cargo de {session.tenantName}.
           </p>
         </div>
         <Link
@@ -38,17 +38,11 @@ export default async function ClientesPage() {
       {clients.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line bg-paper-raised px-4 py-12 text-center">
           <p className="font-[family-name:var(--font-syne)] text-lg font-semibold text-ink">
-            Todavía no hay empresas
+            Todavía no hay clientes
           </p>
           <p className="mt-2 text-sm text-muted">
             Cargá el primer cliente y después sus plantas.
           </p>
-          <Link
-            href="/app/clientes/nuevo"
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-bold text-on-accent"
-          >
-            Crear cliente
-          </Link>
         </div>
       ) : (
         <ul className="grid gap-2 lg:grid-cols-2">

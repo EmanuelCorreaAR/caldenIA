@@ -45,3 +45,6 @@ next-env.d.ts
 /docs/informe-hse/
 
 /src/generated/prisma
+
+# uploads locales de formularios a interpretar
+/public/uploads/

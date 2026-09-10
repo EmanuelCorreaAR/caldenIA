@@ -54,6 +54,18 @@ body {
   color: var(--on-accent);
 }
 
+/* Autofill del navegador (p. ej. ART) no debe quedar blanco */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  box-shadow: 0 0 0 1000px color-mix(in srgb, var(--void) 60%, transparent) inset;
+  transition: background-color 99999s ease-out 0s;
+}
+
 .bg-field {
   background:
     radial-gradient(90% 70% at 15% -10%, var(--glow), transparent 55%),
@@ -71,6 +83,39 @@ body {
 
 .safe-pb {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .bg-field,
+  .bg-grid,
+  .scan-line {
+    background: none !important;
+  }
+
+  .no-print,
+  header,
+  nav,
+  aside {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  .export-sheet {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
 }
 
 @keyframes calden-pulse {

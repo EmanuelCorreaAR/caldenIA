@@ -16,7 +16,7 @@ export async function loginAction(formData: FormData) {
   const next = String(formData.get("next") ?? "").trim();
 
   if (!email || !password) {
-    redirect("/login?error=" + encodeURIComponent("Email y contraseña son obligatorios"));
+    redirect("/?error=" + encodeURIComponent("Email y contraseña son obligatorios"));
   }
 
   // 1) Operador de plataforma
@@ -24,7 +24,7 @@ export async function loginAction(formData: FormData) {
   if (platformUser?.active) {
     const ok = await verifyPassword(password, platformUser.passwordHash);
     if (!ok) {
-      redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
+      redirect("/?error=" + encodeURIComponent("Credenciales inválidas"));
     }
 
     const session: Session = {
@@ -43,21 +43,25 @@ export async function loginAction(formData: FormData) {
       email,
       tenant: { status: { in: ["ACTIVE", "PENDING"] } },
     },
-    include: { tenant: true },
+    include: { tenant: true, client: true },
     orderBy: { createdAt: "asc" },
   });
 
   if (!tenantUser) {
-    redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
+    redirect("/?error=" + encodeURIComponent("Credenciales inválidas"));
   }
 
   if (tenantUser.tenant.status === "SUSPENDED") {
-    redirect("/login?error=" + encodeURIComponent("Este estudio está suspendido"));
+    redirect("/?error=" + encodeURIComponent("Este estudio está suspendido"));
+  }
+
+  if (tenantUser.role === "CLIENT" && !tenantUser.clientId) {
+    redirect("/?error=" + encodeURIComponent("Acceso de cliente incompleto"));
   }
 
   const ok = await verifyPassword(password, tenantUser.passwordHash);
   if (!ok) {
-    redirect("/login?error=" + encodeURIComponent("Credenciales inválidas"));
+    redirect("/?error=" + encodeURIComponent("Credenciales inválidas"));
   }
 
   const session: Session = {
@@ -69,18 +73,27 @@ export async function loginAction(formData: FormData) {
     email: tenantUser.email,
     name: tenantUser.name,
     role: tenantUser.role,
+    clientId: tenantUser.clientId,
+    clientName: tenantUser.client?.name ?? null,
+    mustChangePassword: tenantUser.mustChangePassword,
+    tenantLogoUrl: tenantUser.tenant.logoUrl,
   };
   await setSession(session);
+  if (tenantUser.mustChangePassword) {
+    redirect("/cambiar-clave");
+  }
   redirect(safeNext(next, homeForSession(session)));
 }
 
 export async function logoutAction() {
   await clearSession();
-  redirect("/login");
+  redirect("/");
 }
 
 function safeNext(next: string, fallback: string): string {
   if (!next.startsWith("/") || next.startsWith("//")) return fallback;
-  // plataforma no puede forzar ir a /app vía next si no corresponde: el home ya es correcto
+  // Un CLIENT no puede forzar /app vía next
+  if (fallback === "/portal" && next.startsWith("/app")) return fallback;
+  if (fallback === "/app" && next.startsWith("/portal")) return fallback;
   return next || fallback;
 }

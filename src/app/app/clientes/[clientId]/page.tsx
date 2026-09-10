@@ -50,12 +50,20 @@ export default async function ClienteDetallePage({
               {client.name}
             </h1>
           </div>
-          <Link
-            href={`/app/clientes/${client.id}/plantas/nueva`}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-bold text-on-accent transition hover:bg-accent-strong"
-          >
-            Nueva planta
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/app/clientes/${client.id}/accesos`}
+              className="inline-flex h-11 items-center justify-center rounded-full border border-line bg-paper-raised px-5 text-sm font-semibold text-ink transition hover:border-accent/40"
+            >
+              Accesos portal
+            </Link>
+            <Link
+              href={`/app/clientes/${client.id}/plantas/nueva`}
+              className="inline-flex h-11 items-center justify-center rounded-full bg-accent px-5 text-sm font-bold text-on-accent transition hover:bg-accent-strong"
+            >
+              Nueva planta
+            </Link>
+          </div>
         </div>
       </div>
 

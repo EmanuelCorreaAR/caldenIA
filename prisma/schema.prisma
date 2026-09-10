@@ -14,6 +14,7 @@ enum UserRole {
   OWNER
   TECH
   VIEWER
+  CLIENT
 }
 
 enum TenantStatus {
@@ -27,6 +28,27 @@ enum RecordStatus {
   SUBMITTED
   APPROVED
   ARCHIVED
+}
+
+enum TemplateSource {
+  LIBRARY
+  FROM_IMAGE
+  MANUAL
+}
+
+enum TemplateStatus {
+  DRAFT
+  READY
+}
+
+/// Tipo de registro HSE (charla = capacitación, puesta a tierra = estudio, etc.)
+enum RecordCategory {
+  CAPACITACION
+  ESTUDIO
+  INSPECCION
+  ENTREGA_EPP
+  MEDICION
+  OTRO
 }
 
 /// Operador de la plataforma CaldenIA (vos). No pertenece a ningún tenant.
@@ -67,14 +89,20 @@ model User {
   name         String
   passwordHash String   @default("")
   role         UserRole @default(TECH)
+  /// Solo para role CLIENT: empresa a la que tiene acceso en el portal
+  clientId     String?
+  /// true si la clave la fijó admin/owner y debe cambiarse en el primer ingreso
+  mustChangePassword Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([email])
+  @@index([clientId])
 }
 
 /// Empresa cliente del profesional HSE
@@ -90,6 +118,7 @@ model Client {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   plants Plant[]
+  users  User[]
 
   @@index([tenantId])
 }
@@ -127,45 +156,57 @@ model Asset {
   @@index([plantId])
 }
 
-/// Plantilla de formulario (p. ej. charla de 5 minutos)
+/// Plantilla de formulario (biblioteca, manual o interpretada desde imagen)
 model FormTemplate {
-  id          String   @id @default(cuid())
-  tenantId    String
-  name        String
-  slug        String
-  description String?
+  id             String         @id @default(cuid())
+  tenantId       String
+  name           String
+  slug           String
+  description    String?
+  category       RecordCategory @default(OTRO)
+  status         TemplateStatus @default(READY)
+  source         TemplateSource @default(LIBRARY)
+  sourceImageUrl String?
+  /// Notas de la interpretación (avisos de campos dudosos, etc.)
+  interpretNotes String?
   /// Campos del formulario: [{ id, type, label, required, options? }]
-  schema      Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  schema         Json
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   records FormRecord[]
 
   @@unique([tenantId, slug])
   @@index([tenantId])
+  @@index([status])
+  @@index([category])
 }
 
-/// Registro completado en campo (vía QR / móvil)
+/// Registro completado en campo (formulario digital o escaneo de papel)
 model FormRecord {
-  id         String       @id @default(cuid())
-  templateId String
-  plantId    String
-  status     RecordStatus @default(DRAFT)
-  /// Respuestas del formulario
-  answers    Json
-  signedBy   String?
+  id          String         @id @default(cuid())
+  templateId  String?
+  plantId     String
+  category    RecordCategory @default(OTRO)
+  status      RecordStatus   @default(DRAFT)
+  /// Respuestas del formulario digital (o metadatos del escaneo)
+  answers     Json
+  /// Foto/PDF del papel firmado (capacitaciones y actas en papel)
+  scanUrl     String?
+  signedBy    String?
   submittedAt DateTime?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  template  FormTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  plant     Plant        @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  template  FormTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  plant     Plant         @relation(fields: [plantId], references: [id], onDelete: Cascade)
   documents Document[]
 
   @@index([templateId])
   @@index([plantId])
   @@index([status])
+  @@index([category])
 }
 
 /// PDF u otro documento emitido

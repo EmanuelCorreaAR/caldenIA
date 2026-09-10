@@ -1,13 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
-import { logoutAction } from "@/app/login/actions";
+import { AccountMenu } from "@/components/account-menu";
 import { getSession, requireTenantSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
-const nav = [
+const primaryNav = [
   { href: "/app", label: "Inicio", icon: HomeIcon },
   { href: "/app/clientes", label: "Clientes", icon: ClientsIcon },
   { href: "/app/registros", label: "Registros", icon: RecordsIcon },
+] as const;
+
+const desktopExtraNav = [
+  { href: "/app/templates", label: "Templates", icon: TemplatesIcon },
+] as const;
+
+const mobileNav = [
+  ...primaryNav,
   { href: "/app/mas", label: "Más", icon: MoreIcon },
 ] as const;
 
@@ -18,6 +27,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const session = await requireTenantSession();
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: session.tenantId },
+    select: { logoUrl: true, name: true },
+  });
+  const logoUrl = tenant?.logoUrl ?? session.tenantLogoUrl ?? null;
+  const tenantName = tenant?.name ?? session.tenantName;
 
   return (
     <div className="bg-field min-h-dvh lg:flex">
@@ -35,10 +50,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             CaldenIA
           </Link>
         </div>
-        <p className="mt-3 truncate px-2 text-xs text-muted">{session.tenantName}</p>
+        <p className="mt-3 truncate px-2 text-xs text-muted">{tenantName}</p>
 
         <nav aria-label="Principal" className="mt-8 flex flex-1 flex-col gap-1">
-          {nav.map((item) => (
+          {[...primaryNav, ...desktopExtraNav].map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -49,15 +64,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </Link>
           ))}
         </nav>
-
-        <form action={logoutAction} className="px-2 pb-2">
-          <button
-            type="submit"
-            className="w-full rounded-full border border-line px-3 py-2 text-sm font-medium text-muted transition hover:border-accent/40 hover:text-ink"
-          >
-            Salir
-          </button>
-        </form>
       </aside>
 
       {/* Mobile shell + desktop main */}
@@ -79,19 +85,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <h1 className="hidden font-[family-name:var(--font-syne)] text-lg font-bold tracking-tight text-ink lg:block">
               Panel
             </h1>
-            <div className="flex items-center gap-2">
-              <span className="max-w-[9rem] truncate rounded-full bg-void/40 px-3 py-1 text-xs font-medium text-muted sm:max-w-none lg:bg-paper-raised">
-                {session.tenantName}
-              </span>
-              <form action={logoutAction} className="lg:hidden">
-                <button
-                  type="submit"
-                  className="rounded-full border border-line px-2.5 py-1 text-xs font-medium text-muted transition hover:text-ink"
-                >
-                  Salir
-                </button>
-              </form>
-            </div>
+            <AccountMenu
+              name={session.name}
+              email={session.email}
+              tenantName={tenantName}
+              logoUrl={logoUrl}
+            />
           </div>
         </header>
 
@@ -99,13 +98,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        {/* Mobile bottom nav */}
+        {/* Mobile bottom nav — «Más» solo acá */}
         <nav
           aria-label="Principal"
           className="safe-pb fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper-raised/95 backdrop-blur-md lg:hidden"
         >
           <ul className="mx-auto grid max-w-lg grid-cols-4 gap-1 px-2 pt-2">
-            {nav.map((item) => (
+            {mobileNav.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
@@ -171,6 +170,34 @@ function RecordsIcon() {
       />
       <path
         d="M8.5 8h7M8.5 12h7M8.5 16h4"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function TemplatesIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect
+        x="4"
+        y="5"
+        width="11"
+        height="14"
+        rx="1.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+      <path
+        d="M9 5V4a1.5 1.5 0 0 1 1.5-1.5H18A1.5 1.5 0 0 1 19.5 4v12.5A1.5 1.5 0 0 1 18 18h-3"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 9.5h5M7 13h3.5"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"

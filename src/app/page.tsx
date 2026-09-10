@@ -1,86 +1,105 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
+import { loginAction } from "@/app/login/actions";
+import { getSession, homeForSession } from "@/lib/auth";
+import { PasswordInput } from "@/components/password-input";
 
-export default function HomePage() {
+export const metadata = { title: "Acceso" };
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; next?: string }>;
+}) {
+  const session = await getSession();
+  if (session) {
+    redirect(homeForSession(session));
+  }
+
+  const params = await searchParams;
+
   return (
-    <div className="bg-field relative min-h-dvh overflow-hidden">
-      <div aria-hidden className="bg-grid absolute inset-0" />
-      <div aria-hidden className="scan-line" />
+    <div className="bg-field relative min-h-dvh overflow-hidden lg:grid lg:grid-cols-2">
+      <div aria-hidden className="bg-grid absolute inset-0 opacity-70 lg:hidden" />
+      <div aria-hidden className="scan-line lg:hidden" />
 
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 pt-6 sm:px-8 sm:pt-8 lg:px-10">
-        <div className="flex items-center gap-3">
+      <aside className="relative hidden overflow-hidden border-r border-line/60 lg:flex lg:flex-col lg:justify-between lg:p-10 xl:p-14">
+        <div aria-hidden className="bg-grid absolute inset-0 opacity-50" />
+        <div aria-hidden className="scan-line" />
+        <div className="relative z-10 inline-flex items-center gap-3">
           <span
             className="animate-calden-pulse size-2.5 rounded-full bg-accent"
             aria-hidden
           />
-          <span className="font-[family-name:var(--font-syne)] text-xl font-bold tracking-tight text-ink">
+          <span className="font-[family-name:var(--font-syne)] text-2xl font-bold tracking-tight text-ink">
             CaldenIA
           </span>
         </div>
-        <span className="font-[family-name:var(--font-syne)] text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">
-          HSE · campo
-        </span>
-      </header>
-
-      <main className="relative z-10 mx-auto grid min-h-[calc(100dvh-5rem)] w-full max-w-6xl items-center gap-10 px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-20 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:pb-20 lg:pt-12">
-        <div>
-          <p className="animate-calden-rise mb-5 font-[family-name:var(--font-syne)] text-sm font-semibold uppercase tracking-[0.2em] text-accent">
-            San Luis · Cuyo
+        <div className="relative z-10 max-w-md">
+          <p className="font-[family-name:var(--font-syne)] text-sm font-semibold uppercase tracking-[0.18em] text-accent">
+            HSE · campo
           </p>
-          <h1 className="animate-calden-rise-delay max-w-3xl font-[family-name:var(--font-syne)] text-[clamp(3rem,11vw,5.75rem)] font-extrabold leading-[0.9] tracking-tight text-ink lg:text-[clamp(3.5rem,6vw,6.25rem)]">
-            CaldenIA
-          </h1>
-          <p className="animate-calden-rise-late mt-6 max-w-lg text-base leading-relaxed text-ink-soft sm:text-lg">
-            Charlas, checklists y actas desde el celular. QR en planta, PDF al
-            instante, portal listo para tu cliente.
+          <p className="mt-4 font-[family-name:var(--font-syne)] text-4xl font-bold leading-tight tracking-tight text-ink xl:text-5xl">
+            Tu trabajo en planta, en orden.
           </p>
-          <div className="animate-calden-rise-late mt-10">
-            <Link
-              href="/login"
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-accent px-8 text-base font-bold text-on-accent transition hover:bg-accent-strong hover:shadow-[0_0_32px_rgba(198,241,53,0.35)] active:scale-[0.98]"
-            >
-              Entrar al campo
-            </Link>
-          </div>
         </div>
+      </aside>
 
-        <aside
-          aria-hidden
-          className="relative hidden min-h-[28rem] overflow-hidden rounded-[2rem] border border-line/70 bg-paper-raised/50 p-8 lg:block"
-        >
-          <div className="bg-grid absolute inset-0 opacity-60" />
-          <div className="relative flex h-full flex-col justify-between">
-            <div className="flex items-center gap-2">
-              <span className="animate-calden-pulse size-2 rounded-full bg-accent" />
-              <span className="font-[family-name:var(--font-syne)] text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-                En planta
-              </span>
-            </div>
-            <div>
-              <p className="font-[family-name:var(--font-syne)] text-3xl font-bold leading-tight tracking-tight text-ink xl:text-4xl">
-                Formularios.
-                <br />
-                Evidencia.
-                <br />
-                <span className="text-accent">Entrega.</span>
-              </p>
-              <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">
-                Pensado para el profesional HSE: una mano en el celular, la otra
-                en el activo.
-              </p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {["QR", "PDF", "Portal"].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-line bg-void/50 px-3 py-4 text-center font-[family-name:var(--font-syne)] text-sm font-bold text-ink"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-12 lg:mx-0 lg:max-w-none lg:px-16 xl:px-24">
+        <div className="w-full lg:max-w-sm">
+          <div className="inline-flex items-center gap-3 self-start lg:hidden">
+            <span
+              className="animate-calden-pulse size-2.5 rounded-full bg-accent"
+              aria-hidden
+            />
+            <span className="font-[family-name:var(--font-syne)] text-2xl font-bold tracking-tight text-ink">
+              CaldenIA
+            </span>
           </div>
-        </aside>
-      </main>
+
+          <p className="mt-10 font-[family-name:var(--font-syne)] text-sm font-semibold uppercase tracking-[0.18em] text-accent lg:mt-0">
+            Acceso
+          </p>
+          <h1 className="mt-3 font-[family-name:var(--font-syne)] text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+            Identificate
+          </h1>
+
+          <form
+            action={loginAction}
+            className="mt-10 space-y-3 rounded-3xl border border-line/80 bg-paper-raised/80 p-5 shadow-[0_0_0_1px_rgba(198,241,53,0.04)] backdrop-blur-md sm:p-6"
+          >
+            {params.next ? (
+              <input type="hidden" name="next" value={params.next} />
+            ) : null}
+
+            <input
+              type="email"
+              name="email"
+              required
+              autoComplete="email"
+              placeholder="Email"
+              aria-label="Email"
+              className="h-12 w-full rounded-2xl border-0 bg-void/60 px-4 text-base text-ink outline-none ring-1 ring-line transition placeholder:text-muted focus:ring-2 focus:ring-accent"
+            />
+
+            <PasswordInput
+              name="password"
+              required
+              autoComplete="current-password"
+            />
+
+            {params.error ? (
+              <p className="pt-1 text-sm text-danger">{params.error}</p>
+            ) : null}
+
+            <button
+              type="submit"
+              className="mt-2 flex h-12 w-full items-center justify-center rounded-full bg-accent text-sm font-bold text-on-accent transition hover:bg-accent-strong hover:shadow-[0_0_28px_rgba(198,241,53,0.3)] active:scale-[0.99]"
+            >
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

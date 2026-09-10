@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { TenantStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, requirePlatformSession, slugify } from "@/lib/auth";
+import { ensureCharlaTemplate } from "@/lib/ensure-templates";
 import { logoutAction } from "@/app/login/actions";
 
 export { logoutAction as logoutPlatformAdmin };
@@ -71,8 +72,8 @@ export async function createTenantWithOwner(formData: FormData) {
   const status = activateNow ? TenantStatus.ACTIVE : TenantStatus.PENDING;
   const passwordHash = await hashPassword(ownerPassword);
 
-  await prisma.$transaction(async (tx) => {
-    const tenant = await tx.tenant.create({
+  const tenant = await prisma.$transaction(async (tx) => {
+    const created = await tx.tenant.create({
       data: {
         name,
         slug,
@@ -85,14 +86,19 @@ export async function createTenantWithOwner(formData: FormData) {
 
     await tx.user.create({
       data: {
-        tenantId: tenant.id,
+        tenantId: created.id,
         name: ownerName,
         email: ownerEmail,
         passwordHash,
         role: "OWNER",
+        mustChangePassword: true,
       },
     });
+
+    return created;
   });
+
+  await ensureCharlaTemplate(tenant.id);
 
   revalidatePath("/admin");
   redirect("/admin");
@@ -115,6 +121,31 @@ export async function setTenantStatus(formData: FormData) {
       activatedAt: next === TenantStatus.ACTIVE ? new Date() : undefined,
     },
   });
+
+  revalidatePath("/admin");
+}
+
+export async function deleteTenant(formData: FormData) {
+  await requireAdmin();
+
+  const tenantId = String(formData.get("tenantId") ?? "").trim();
+  if (!tenantId) return;
+
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  if (!tenant) return;
+
+  await prisma.tenant.delete({ where: { id: tenantId } });
+
+  try {
+    const { rm } = await import("fs/promises");
+    const path = await import("path");
+    await rm(path.join(process.cwd(), "public", "uploads", tenantId), {
+      recursive: true,
+      force: true,
+    });
+  } catch {
+    // uploads opcionales
+  }
 
   revalidatePath("/admin");
 }

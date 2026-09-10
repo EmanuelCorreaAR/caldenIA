@@ -20,10 +20,10 @@ export default async function NuevoClientePage({
           ← Clientes
         </Link>
         <h1 className="mt-3 font-[family-name:var(--font-syne)] text-2xl font-bold tracking-tight text-ink">
-          Nueva empresa
+          Nuevo cliente
         </h1>
         <p className="mt-1 text-sm text-muted">
-          El cliente del profesional HSE. Después sumás plantas.
+          Cliente al que le brindás el servicio HSE. Después sumás plantas.
         </p>
       </div>
 
@@ -33,19 +33,31 @@ export default async function NuevoClientePage({
         </div>
       ) : null}
 
-      <form action={createClient} className="space-y-4">
+      <form action={createClient} className="space-y-4" autoComplete="off">
         <Field
           label="Razón social / nombre"
           name="name"
           required
           placeholder="Acme Industrial S.A."
+          autoComplete="organization"
         />
-        <Field label="CUIT" name="cuit" placeholder="30-12345678-9" />
-        <Field label="ART" name="art" placeholder="Nombre de la ART" />
+        <Field
+          label="CUIT"
+          name="cuit"
+          placeholder="30-12345678-9"
+          autoComplete="off"
+        />
+        <Field
+          label="ART"
+          name="art"
+          placeholder="Nombre de la ART"
+          autoComplete="off"
+        />
         <Field
           label="Contacto administrativo"
           name="contact"
           placeholder="nombre · teléfono · email"
+          autoComplete="off"
         />
         <button
           type="submit"
@@ -63,11 +75,13 @@ function Field({
   name,
   required,
   placeholder,
+  autoComplete,
 }: {
   label: string;
   name: string;
   required?: boolean;
   placeholder?: string;
+  autoComplete?: string;
 }) {
   return (
     <label className="block space-y-1.5">
@@ -76,6 +90,7 @@ function Field({
         name={name}
         required={required}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         className="h-12 w-full rounded-xl border-0 bg-void/60 px-4 text-base text-ink outline-none ring-1 ring-line transition placeholder:text-muted focus:ring-2 focus:ring-accent"
       />
     </label>

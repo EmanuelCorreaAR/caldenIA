@@ -31,17 +31,17 @@ export default async function AppHomePage() {
     {
       href: "/app/clientes",
       title: "Clientes",
-      body: "Empresas y plantas a cargo",
+      body: "Clientes y plantas a cargo",
     },
     {
       href: "/app/registros",
       title: "Registros",
-      body: "Charlas, checklists y actas",
+      body: "Capacitaciones, estudios y actas",
     },
     {
       href: "/app/clientes/nuevo",
       title: "Alta rápida",
-      body: "Sumar una empresa nueva",
+      body: "Sumar un cliente nuevo",
     },
   ];
 
@@ -76,7 +76,7 @@ export default async function AppHomePage() {
         </div>
         {recentClients.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-line bg-paper-raised px-4 py-8 text-center">
-            <p className="text-sm text-muted">Todavía no cargaste empresas.</p>
+            <p className="text-sm text-muted">Todavía no cargaste clientes.</p>
             <Link
               href="/app/clientes/nuevo"
               className="mt-3 inline-block text-sm font-semibold text-accent underline underline-offset-2"

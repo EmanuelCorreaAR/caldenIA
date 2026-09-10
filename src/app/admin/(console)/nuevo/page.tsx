@@ -24,8 +24,9 @@ export default async function NewTenantPage({
           Habilitar estudio
         </h1>
         <p className="mt-1 text-sm text-muted">
-          Crea el tenant y su primer usuario OWNER en un solo paso. Ese owner
-          entra por el mismo /login.
+          Crea la marca (tenant) y su primer usuario OWNER. Ese owner entra en `/`
+          y en el primer ingreso debe cambiar la contraseña temporal; después da
+          accesos de portal a sus empresas cliente.
         </p>
       </div>
 
@@ -77,7 +78,7 @@ export default async function NewTenantPage({
             inputClassName="h-12 w-full rounded-xl border border-line bg-paper py-0 pl-3 pr-12 text-base text-ink outline-none ring-accent focus:ring-2"
           />
           <span className="block text-xs text-muted">
-            La usa para entrar en /login al panel del estudio.
+            La usa para entrar en el panel del estudio.
           </span>
         </label>
         <label className="block space-y-1.5">
